@@ -17,7 +17,7 @@ namespace BobOnGradle
 		}
 		public override void onDisable()
 		{
-			PR pr = GetNoel();
+			PR pr = Utils.GetNoel();
 			M2PrSkill.SkillApplyMem m=new M2PrSkill.SkillApplyMem(pr);
 			m.maxmp = (int)original;
 			m.mp = m.maxmp;
@@ -31,7 +31,7 @@ namespace BobOnGradle
 
 		public override void onUpdate()
 		{
-			PR pr = GetNoel();
+			PR pr = Utils.GetNoel();
 			M2PrSkill.SkillApplyMem m = new M2PrSkill.SkillApplyMem(pr);
 			original = m.maxmp;
 			m.maxmp = bonus;

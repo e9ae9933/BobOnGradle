@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using nel;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,14 @@ namespace BobOnGradle
 		public void disable(string key)
 		{
 			modules.GetValueSafe(key).disable();
+		}
+		public void tick()
+		{
+			foreach(var module in modules)
+			{
+				if (module.Value.enabled)
+					module.Value.onUpdate();
+			}
 		}
 	}
 }

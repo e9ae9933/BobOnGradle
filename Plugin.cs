@@ -3,27 +3,36 @@ using HarmonyLib;
 using HarmonyLib.Tools;
 using m2d;
 using nel;
+using PixelLiner;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading;
+using UnityEngine;
+using XX;
 
 namespace BobOnGradle
 {
 	[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 	public class Plugin : BaseUnityPlugin
 	{
+		public static Plugin instance=null;
 		public GUI gui;
 		public Modules modules;
+		Queue<Action> nextTickList = new();
+
 		private void Awake()
 		{
+			instance = this;
 			try
 			{
 				Console.WriteLine("loading");
 				HarmonyFileLog.Enabled = true;
-
+				/*
 				Logger.LogInfo("loading gui");
 
 				Process.Start("cmd.exe","/c echo %cd% > cd.txt");
@@ -35,14 +44,12 @@ namespace BobOnGradle
 				process.Start();
 				modules = new();
 				gui = new GUI(this, process);
+				*/
+				Harmony.CreateAndPatchAll(typeof(Patches));
+				Harmony.CreateAndPatchAll(this.GetType());
 
-
-				// Plugin startup logic
 				Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
-				/*
-				double r = nel.M2PrSkill.COMET_RADIUS;
-				Harmony.CreateAndPatchAll( typeof( Plugin ) );*/
 			}
 			catch(Exception e)
 			{
@@ -51,136 +58,89 @@ namespace BobOnGradle
 		}
 		private void Update()
 		{
-			//Console.WriteLine("updating");
-			gui.update();
-			//Console.WriteLine("updated");
-			//Console.WriteLine("update "+DateTime.UtcNow.Ticks);
-			/*
-			if (time >= 0)
-			{
-				time--;
-				if(time<0 )
-				{
-					UILog.Instance.AddAlert("结束效果：降魔·护法夜叉");
-				}
-			}*/
-		}
-		public static int time = -1;
-		[HarmonyTranspiler]
-		[HarmonyPatch(typeof(MGContainer), "CircleCast")]
-		public static IEnumerable<CodeInstruction> CircleCast(IEnumerable<CodeInstruction> instructions)
-		{
-			Console.WriteLine("checking");
-			List<CodeInstruction> list= new List<CodeInstruction>();
-			list.Add(new CodeInstruction(OpCodes.Ldarg_0));
-			for (int i = 1; i <= 4; i++)
-				list.Add(new CodeInstruction(OpCodes.Ldarga_S, i));
-			list.Add(new CodeInstruction(OpCodes.Call, typeof(Plugin).GetMethod("onAttack")));
-			foreach (CodeInstruction instr in instructions)
-			{
-				if(instr.opcode==OpCodes.Ret)
-				{
-					list.Add(new CodeInstruction(OpCodes.Ldarg_0));
-					for (int i = 1; i <= 4; i++)
-						list.Add(new CodeInstruction(OpCodes.Ldarga_S, i));
-					list.Add(new CodeInstruction(OpCodes.Call, typeof(Plugin).GetMethod("postAttack")));
-				}
-				list.Add(instr);
-				if (instr.opcode == OpCodes.Stfld && (instr.operand as FieldInfo).Name.Contains("_apply_knockback_current"))
-				{
-					Console.WriteLine("patching");
-					list.Add(new CodeInstruction(OpCodes.Call, typeof(Plugin).GetMethod("onHit")));
-				}
-			}
-			return list;
-		}
-		static int num = 0;
-		public static void onHit()
-		{
-			Console.WriteLine("onHit");
-			num++;
-		}
-		public static void onAttack(MGContainer container,ref MagicItem mg,ref M2Ray ray,ref NelAttackInfo atk,ref HITTYPE hittype)
-		{
-			Console.WriteLine("onAttack "+mg.Caster+" "+mg+" "+atk);
-			if(mg.kind==MGKIND.PR_COMET)
-			{
 
-			}
-			num = 0;
-		}
-		public static void postAttack(MGContainer container, ref MagicItem mg, ref M2Ray ray, ref NelAttackInfo atk, ref HITTYPE hittype)
-		{
-			Console.WriteLine("postAttack " + mg.Caster + " " + mg + " " + atk);
-			if(num>=2&&mg.kind==MGKIND.PR_COMET&&time<0)
+			try
 			{
-				time = 10 * 60;
-				int d = 28*8;
-				(mg.Caster as PR).Skill.getOverChargeSlots().getMana(d, ref d);
-				UILog.Instance.AddAlert("触发效果：降魔·护法夜叉");
+				while (nextTickList.Count > 0)
+				{
+					Action a = nextTickList.Dequeue();
+					a.Invoke();
+				}
+				Patches.tick();
 			}
-		}
-		[HarmonyTranspiler]
-		[HarmonyPatch(typeof(M2PrSkill),"runState")]
-		public static IEnumerable<CodeInstruction> patchState(IEnumerable<CodeInstruction> instructions)
-		{
-			int d = -1;
-			foreach(var instruction in instructions)
+			catch(Exception e)
 			{
-				yield return instruction;
-				if(instruction.opcode==OpCodes.Ldstr&&instruction.operand=="attack_misogi3")
-				{
-					d = 3;
-				}
-				if(d==0)
-				{
-					Console.WriteLine("patch after " + instruction);
-					yield return new CodeInstruction(OpCodes.Ldarg_0);
-					yield return new CodeInstruction(OpCodes.Ldc_I4_0);
-					yield return new CodeInstruction(OpCodes.Ldnull);
-					yield return new CodeInstruction(OpCodes.Callvirt, typeof(M2PrSkill).GetMethod("executeSmallAttack",BindingFlags.NonPublic|BindingFlags.Instance));
-					yield return new CodeInstruction(OpCodes.Dup);
-					yield return new CodeInstruction(OpCodes.Dup);
-					yield return new CodeInstruction(OpCodes.Ldfld, typeof(MagicItem).GetField("sz"));
-					yield return new CodeInstruction(OpCodes.Ldc_R4, 7.5f);
-					yield return new CodeInstruction(OpCodes.Mul);
-					yield return new CodeInstruction(OpCodes.Stfld, typeof(MagicItem).GetField("sz"));
-					yield return new CodeInstruction(OpCodes.Ldc_R4, 1f);
-					yield return new CodeInstruction(OpCodes.Callvirt, typeof(MagicItem).GetMethod("run"));
-					yield return new CodeInstruction(OpCodes.Pop);
-				}
-				d--;
+				Logger.LogError(e);
 			}
 		}
-		[HarmonyDebug]
-		[HarmonyTranspiler]
-		[HarmonyPatch(typeof(M2PrSkill),"publishShotgunHit")]
-		public static IEnumerable<CodeInstruction> patchPublish(IEnumerable<CodeInstruction> instructions,ILGenerator generator)
+		public void scheduleNextTick(Action a)
 		{
-			bool r = true;
-			for(int i=0;i<instructions.Count();i++)
+			nextTickList.Enqueue(a);
+		}
+		public static int idHutao;
+		static bool inited=false;
+		static PxlCharacter chara;
+		[HarmonyPatch(typeof(UIStatus),"fineLoad")]
+		[HarmonyPostfix]
+		static void init()
+		{
+			if (inited)
+				return;
+			try
 			{
-				CodeInstruction instruction=instructions.ElementAt(i);
-				yield return instruction;
-				if(instruction.opcode==OpCodes.Stloc_2&&r)
-				{
-					System.Reflection.Emit.Label label =generator.DefineLabel();
-					yield return new CodeInstruction(OpCodes.Call, typeof(Plugin).GetMethod("cancelPublish"));
-					yield return new CodeInstruction(OpCodes.Brfalse_S,label);
-					yield return new CodeInstruction(OpCodes.Ldc_I4_1);
-					yield return new CodeInstruction(OpCodes.Ret);
-					instructions.ElementAt(i+1).labels.Add(label);
-					Console.WriteLine("patch 2");
-					r = false;
-				}
+				inited = true;
+				Console.WriteLine("initing chara "+chara+" "+chara.isLoadCompleted());
+				PxlPose pose = chara.getPoseByName("hutaoaim");
+				PxlSequence seq = pose.getSequence(0);
+				PxlFrame f = seq.getFrameByName("hutaoframe");
+				Console.WriteLine("layers " + f.countLayers());
+				PxlLayer layer = f.getLayerByName("hutao");
+				Console.WriteLine("layer " + layer.name + " " + layer.alpha);
+				PxlImage img=layer.Img;
+				Texture2D tex = (Texture2D)img.get_I();
+				Console.WriteLine("texture "+" read "+tex.isReadable);
+				File.WriteAllBytes("t.png",tex.EncodeToPNG());
+				Console.WriteLine(img.id+" "+img.id2+" "+img.idstr+" "+img.valid);
+				Console.WriteLine("f " + f.width + " " + f.height + " name " + f.name);
+				NelItem item = Utils.registerEnhancer("hutao", 0, f, "幽蝶能留一缕芳", "诺艾尔战败时立刻治疗所有异常状态，并使用一次无副作用的圣光爆发，并恢复 100 生命值。", out idHutao);
+				Utils.GetNoel().NM2D.IMNG.getInventoryEnhancer().Add(item, 1, 0);
+				Console.WriteLine("init with no exceptions");
 			}
+			catch(Exception e)
+			{
+				Console.WriteLine(e);
+			}
+			Console.WriteLine("init complete");
 		}
-		public static bool cancelPublish()
+		static bool inited1 = false;
+		[HarmonyPatch(typeof(XX.MTRX),"init1")]
+		[HarmonyPostfix]
+		static void init1()
 		{
-			Console.WriteLine("publish");
-			//return true;
-			return time >= 0;
-			return true;
+			if (inited1)
+				return;
+			inited1 = true;
+			/*
+			chara=PxlsLoader.loadCharacterASync("hutao",File.ReadAllBytes("hutao.pxls"),null,64f);
+			*/
+			PxlsLoader.texture_unreadable = false;
+			chara = new("hutao");
+			chara.pixelsPerUnit = 64;
+			chara.autoFlipX = true;
+			bool p=chara.loadASync(File.ReadAllBytes("hutao.pxls"));
+			Console.WriteLine("chara " + chara+" null "+(chara==null)+" suc "+p);
+		}
+		[HarmonyPatch(typeof(TX),"reloadTx")]
+		[HarmonyPostfix]
+		static void tx()
+		{
+
+		}
+		[HarmonyPatch(typeof(ButtonSkinEnhancerRow),"drawIcon")]
+		[HarmonyPrefix]
+		static void fuckyouhachan(ButtonSkinEnhancerRow __instance,EnhancerManager.Enhancer ___Eh)
+		{
+			Console.WriteLine(__instance.title + " " + ___Eh.title+" "+___Eh.PF.getImageTexture().GetType());
 		}
 	}
 }
