@@ -27,6 +27,7 @@ namespace BobOnGradle
 
 		private void Awake()
 		{
+			System.Diagnostics.Debugger.Launch();
 			instance = this;
 			try
 			{
@@ -78,32 +79,40 @@ namespace BobOnGradle
 			nextTickList.Enqueue(a);
 		}
 		public static int idHutao;
+		public static int idNoelle;
 		static bool inited=false;
-		static PxlCharacter chara;
-		[HarmonyPatch(typeof(UIStatus),"fineLoad")]
+		[HarmonyPatch(typeof(SceneGame),"Update")]
 		[HarmonyPostfix]
-		static void init()
+		static void init(byte ___t)
 		{
 			if (inited)
 				return;
+			if (___t != 2)
+				return;
+			inited = true;
 			try
 			{
 				inited = true;
-				Console.WriteLine("initing chara "+chara+" "+chara.isLoadCompleted());
-				PxlPose pose = chara.getPoseByName("hutaoaim");
-				PxlSequence seq = pose.getSequence(0);
-				PxlFrame f = seq.getFrameByName("hutaoframe");
-				Console.WriteLine("layers " + f.countLayers());
-				PxlLayer layer = f.getLayerByName("hutao");
-				Console.WriteLine("layer " + layer.name + " " + layer.alpha);
-				PxlImage img=layer.Img;
-				Texture2D tex = (Texture2D)img.get_I();
-				Console.WriteLine("texture "+" read "+tex.isReadable);
-				File.WriteAllBytes("t.png",tex.EncodeToPNG());
-				Console.WriteLine(img.id+" "+img.id2+" "+img.idstr+" "+img.valid);
-				Console.WriteLine("f " + f.width + " " + f.height + " name " + f.name);
-				NelItem item = Utils.registerEnhancer("hutao", 0, f, "幽蝶能留一缕芳", "诺艾尔战败时立刻治疗所有异常状态，并使用一次无副作用的圣光爆发，并恢复 100 生命值。", out idHutao);
-				Utils.GetNoel().NM2D.IMNG.getInventoryEnhancer().Add(item, 1, 0);
+				NelItem item = Utils.registerEnhancer(
+					"hutao",
+					0,
+					null,
+					"幽蝶能留一缕芳",
+					"诺艾尔战败时立刻治疗所有异常状态，\n" +
+					"并使用一次无副作用的圣光爆发，\n" +
+					"且恢复 100 生命值。",
+					out idHutao);
+				Utils.registerEnhancer(
+					"noelle",
+					0,
+					null,
+					"要一尘不染才行",
+					"诺艾尔获得魔力值50%的防御力；\n" +
+					"魔法霰弹额外提高诺艾尔防御力50%的攻击力；\n" +
+					"此外，每打倒1个敌人，过充槽立刻获得224魔力值。",
+					out idNoelle);
+				//Utils.GetNoel().NM2D.IMNG.getInventoryEnhancer().Add(item, 1, 0);
+				SceneGame.prepareM2DObject();
 				Console.WriteLine("init with no exceptions");
 			}
 			catch(Exception e)
@@ -113,34 +122,11 @@ namespace BobOnGradle
 			Console.WriteLine("init complete");
 		}
 		static bool inited1 = false;
-		[HarmonyPatch(typeof(XX.MTRX),"init1")]
-		[HarmonyPostfix]
-		static void init1()
-		{
-			if (inited1)
-				return;
-			inited1 = true;
-			/*
-			chara=PxlsLoader.loadCharacterASync("hutao",File.ReadAllBytes("hutao.pxls"),null,64f);
-			*/
-			PxlsLoader.texture_unreadable = false;
-			chara = new("hutao");
-			chara.pixelsPerUnit = 64;
-			chara.autoFlipX = true;
-			bool p=chara.loadASync(File.ReadAllBytes("hutao.pxls"));
-			Console.WriteLine("chara " + chara+" null "+(chara==null)+" suc "+p);
-		}
 		[HarmonyPatch(typeof(TX),"reloadTx")]
 		[HarmonyPostfix]
 		static void tx()
 		{
 
-		}
-		[HarmonyPatch(typeof(ButtonSkinEnhancerRow),"drawIcon")]
-		[HarmonyPrefix]
-		static void fuckyouhachan(ButtonSkinEnhancerRow __instance,EnhancerManager.Enhancer ___Eh)
-		{
-			Console.WriteLine(__instance.title + " " + ___Eh.title+" "+___Eh.PF.getImageTexture().GetType());
 		}
 	}
 }

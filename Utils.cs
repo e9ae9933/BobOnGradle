@@ -30,10 +30,10 @@ namespace BobOnGradle
 			EnhancerManager.Enhancer enhancer = new(name, frame);
 			enhancer.cost = cost;
 			NelItem item = NelItem.CreateItemEntry("Enhancer_"+name,
-				new NelItem("Enhancer_hutao", 0, 600, 1)
+				new NelItem("Enhancer_"+name, 0, 600, 1)
 				{
 					category = (NelItem.CATEG)10485761U,
-					FnGetName = new FnGetItemDetail((item, grade, def) => "强化插槽：幽蝶能留一缕芳"),
+					FnGetName = new FnGetItemDetail((item, grade, def) => "强化插槽："+title ),
 					FnGetDesc = new((item, grade, def) => "描述"),
 					FnGetDetail = new((item, grade, def) => "细节")
 				}, false);
