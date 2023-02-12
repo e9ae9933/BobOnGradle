@@ -22,6 +22,7 @@ namespace BobOnGradle
 			t.replaceTextContents(value);
 			TX.getDefaultFamily().Add(t);
 		}
+		static int idd = 62000;
 		public static NelItem registerEnhancer(string name,int cost,PxlFrame frame,string title,string desc,out int id)
 		{
 			Type info = typeof(EnhancerManager);
@@ -36,7 +37,7 @@ namespace BobOnGradle
 					FnGetName = new FnGetItemDetail((item, grade, def) => "强化插槽："+title ),
 					FnGetDesc = new((item, grade, def) => "描述"),
 					FnGetDetail = new((item, grade, def) => "细节")
-				}, false);
+				}, ++idd,false);
 			item.value = 1;
 			id = list.Count();
 			enhancer.ehbit = (EnhancerManager.EH)(1 << id);

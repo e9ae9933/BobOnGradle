@@ -27,25 +27,11 @@ namespace BobOnGradle
 
 		private void Awake()
 		{
-			System.Diagnostics.Debugger.Launch();
 			instance = this;
 			try
 			{
-				Console.WriteLine("loading");
+				Console.WriteLine("loading2");
 				HarmonyFileLog.Enabled = true;
-				/*
-				Logger.LogInfo("loading gui");
-
-				Process.Start("cmd.exe","/c echo %cd% > cd.txt");
-
-				Logger.LogInfo(System.Environment.CurrentDirectory);
-				Process process = new();
-				process.StartInfo.UseShellExecute = false;
-				process.StartInfo.FileName = @"E:\BobOnGradle\GUI.exe";
-				process.Start();
-				modules = new();
-				gui = new GUI(this, process);
-				*/
 				Harmony.CreateAndPatchAll(typeof(Patches));
 				Harmony.CreateAndPatchAll(this.GetType());
 
@@ -67,7 +53,11 @@ namespace BobOnGradle
 					Action a = nextTickList.Dequeue();
 					a.Invoke();
 				}
-				Patches.tick();
+				foreach(var v in Patches.draw.Keys)
+				{
+					if (v.destructed)
+						Patches.draw.Remove(v);
+				}
 			}
 			catch(Exception e)
 			{
@@ -80,7 +70,10 @@ namespace BobOnGradle
 		}
 		public static int idHutao;
 		public static int idNoelle;
+		public static int idYelan;
+		public static int idNahida;
 		static bool inited=false;
+		public static PxlCharacter nahida;
 		[HarmonyPatch(typeof(SceneGame),"Update")]
 		[HarmonyPostfix]
 		static void init(byte ___t)
@@ -107,12 +100,33 @@ namespace BobOnGradle
 					0,
 					null,
 					"要一尘不染才行",
-					"诺艾尔获得魔力值50%的防御力；\n" +
+					"诺艾尔获得魔力值比例50%的防御力；\n" +
 					"魔法霰弹额外提高诺艾尔防御力50%的攻击力；\n" +
 					"此外，每打倒1个敌人，过充槽立刻获得224魔力值。",
-					out idNoelle);
-				//Utils.GetNoel().NM2D.IMNG.getInventoryEnhancer().Add(item, 1, 0);
-				SceneGame.prepareM2DObject();
+					out idNoelle);/*
+				Utils.registerEnhancer(
+					"yelan",
+					0,
+					null,
+					"取胜者，大小通吃（未实装）",
+					"释放圣光爆发后，诺艾尔将进入「运筹帷幄」状态：\n" +
+					"诺艾尔的纯白之箭将发射特殊的「破局矢」。\n" +
+					"这种箭矢具有与纯白之箭相似的特性，但击中敌人或墙壁时额外产生一个立刻爆炸的能量球，\n" +
+					"造成的伤害视为魔法伤害，能造成能量球156%的伤害。\n" +
+					"「运筹帷幄」状态至多持续20秒，将在诺艾尔发射5枚纯白之箭后移除。",
+					out idYelan);*/
+				Utils.registerEnhancer(
+					"nahida",
+					0,
+					null,
+					"大辩圆成之实",
+					"诺艾尔施放圣光爆发时，对屏幕内的所有敌人施加蕴种印。\n" +
+					"施放圣光爆发后，轻攻击或魔法霰弹命中处于蕴种印状态下的敌人时，\n" +
+					"将对该敌人及其所处连结中的所有敌人释放灭净三业·业障除，\n" +
+					"基于本次攻击力的20%，造成魔法伤害。每0.2秒至多触发一次。",
+					out idNahida);
+				nahida = PxlsLoader.loadCharacterASync("nahida", File.ReadAllBytes("nahida.pxls"), 64);
+				//nahida.getPoseByName("trikarma").getSequence(0).getFrame(0).getImageTexture();
 				Console.WriteLine("init with no exceptions");
 			}
 			catch(Exception e)
@@ -120,13 +134,6 @@ namespace BobOnGradle
 				Console.WriteLine(e);
 			}
 			Console.WriteLine("init complete");
-		}
-		static bool inited1 = false;
-		[HarmonyPatch(typeof(TX),"reloadTx")]
-		[HarmonyPostfix]
-		static void tx()
-		{
-
 		}
 	}
 }
