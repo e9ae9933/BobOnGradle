@@ -53,6 +53,43 @@ namespace BobOnGradle
 			if(__instance.getEH((EnhancerManager.EH)(1<<Plugin.idNoelle)))
 				__result *= (1f-0.5f*__instance.mp_ratio);
 		}
+		[HarmonyPatch(typeof(PR),"applyHpDamageSimple")]
+		[HarmonyPostfix]
+		public static void applyToPlayer(PR __instance,int __result,NelAttackInfoBase Atk)
+		{
+			M2Attackable a=Atk.AttackFrom;
+			if(a is NelEnemy)
+			{
+				Console.WriteLine("found " + a);
+				draw[a as NelEnemy] = new MeshDrawer();
+			}
+		}
+		static float nahidaTicks = 0;
+		[HarmonyPatch(typeof(NelEnemy), "applyDamage")]
+		[HarmonyPostfix]
+		public static void applyToEnemy(NelEnemy __instance, int __result, NelAttackInfo Atk)
+		{
+			M2Attackable a = Atk.AttackFrom;
+			if (a is PR&&draw.ContainsKey(__instance))
+			{
+				float ticks=(a as PR).Mp.floort;
+				if (ticks > nahidaTicks)
+				{
+					nahidaTicks = ticks + 12;
+					Console.WriteLine("try publish");
+					Atk.hpdmg_current *= 2;
+					foreach (var e in draw.Keys)
+					{
+						if (e.is_alive)
+							e.applyDamage(Atk);
+					}
+				}
+				else if(ticks+12<nahidaTicks)
+				{
+					nahidaTicks = 0;
+				}
+			}
+		}
 		[HarmonyPatch(typeof(NelEnemy),"applyHpDamageRatio")]
 		[HarmonyPostfix]
 		public static void applyEnemyDamage(AttackInfo Atk,ref float __result)
@@ -99,17 +136,14 @@ namespace BobOnGradle
 			{
 				return;
 			}
-			if (___Mv.is_alive)
+			if (___Mv.is_alive&&draw.ContainsKey(___Mv))
 			{
 				M2MoverPr aimPr = ___Mv.AimPr;
 				if (aimPr != null && aimPr.is_alive)
 				{
-					if (draw.ContainsKey(___Mv))
-						MdOut = draw.GetValueSafe(___Mv);
-					else
-						draw[___Mv]=MdOut = new MeshDrawer();
+					MdOut = draw.GetValueSafe(___Mv);
 					MdOut.clear();
-					Console.WriteLine("sz " + ___Mv.sizey);
+					//Console.WriteLine("sz " + ___Mv.sizey);
 					Tk.Matrix = ___RtkBuf.Matrix;
 					PxlCharacter chara = Plugin.nahida;
 					PxlPose pose = chara.getPoseByName("trikarma");

@@ -53,10 +53,14 @@ namespace BobOnGradle
 					Action a = nextTickList.Dequeue();
 					a.Invoke();
 				}
-				foreach(var v in Patches.draw.Keys)
+				for (int i = 0; i < Patches.draw.Count; i++)
 				{
-					if (v.destructed)
-						Patches.draw.Remove(v);
+					NelEnemy e = Patches.draw.ElementAt(i).Key;
+					if (e.destructed)
+					{
+						Patches.draw.Remove(e);
+						i--;
+					}
 				}
 			}
 			catch(Exception e)
@@ -92,8 +96,8 @@ namespace BobOnGradle
 					null,
 					"幽蝶能留一缕芳",
 					"诺艾尔战败时立刻治疗所有异常状态，\n" +
-					"并使用一次无副作用的圣光爆发，\n" +
-					"且恢复 100 生命值。",
+					"然后使用一次无副作用的圣光爆发，\n" +
+					"并恢复 100 生命值。",
 					out idHutao);
 				Utils.registerEnhancer(
 					"noelle",
@@ -120,10 +124,10 @@ namespace BobOnGradle
 					0,
 					null,
 					"大辩圆成之实",
-					"诺艾尔施放圣光爆发时，对屏幕内的所有敌人施加蕴种印。\n" +
-					"施放圣光爆发后，轻攻击或魔法霰弹命中处于蕴种印状态下的敌人时，\n" +
-					"将对该敌人及其所处连结中的所有敌人释放灭净三业·业障除，\n" +
-					"基于本次攻击力的20%，造成魔法伤害。每0.2秒至多触发一次。",
+					"敌人对诺艾尔造成伤害时，将会获得蕴种印。\n" +
+					"诺艾尔的轻攻击或魔法霰弹命中处于蕴种印状态下的敌人时，\n" +
+					"将对所有处于蕴种印状态下的敌人释放灭净三业·业障除，\n" +
+					"基于本次攻击力的200%，造成同类别的伤害。每0.2秒至多触发一次。",
 					out idNahida);
 				nahida = PxlsLoader.loadCharacterASync("nahida", File.ReadAllBytes("nahida.pxls"), 64);
 				//nahida.getPoseByName("trikarma").getSequence(0).getFrame(0).getImageTexture();
