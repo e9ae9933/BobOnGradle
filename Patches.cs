@@ -60,6 +60,8 @@ namespace BobOnGradle
 			M2Attackable a=Atk.AttackFrom;
 			if(a is NelEnemy)
 			{
+				if (!__instance.getEH((EnhancerManager.EH)(1 << Plugin.idNahida)))
+					return;
 				Console.WriteLine("found " + a);
 				draw[a as NelEnemy] = new MeshDrawer();
 			}
@@ -72,6 +74,8 @@ namespace BobOnGradle
 			M2Attackable a = Atk.AttackFrom;
 			if (a is PR&&draw.ContainsKey(__instance))
 			{
+				if (!(a as PR).getEH((EnhancerManager.EH)(1 << Plugin.idNahida)))
+					return;
 				float ticks=(a as PR).Mp.floort;
 				if (ticks > nahidaTicks)
 				{
@@ -100,10 +104,27 @@ namespace BobOnGradle
 				if(info.Caster is PR)
 				{
 					PR pr = info.Caster as PR;
+					if (pr.getEH((EnhancerManager.EH)(1 << Plugin.idRaidenShogun)))
+					{
+						if (__result < 1)
+							__result = (float)(1 - 0.4 * (1 - __result));
+					}
 					if (pr.getEH((EnhancerManager.EH)(1 << Plugin.idNoelle)))
-						__result *= (1f + 0.25f * pr.mp_ratio);
+						__result += 0.25f * pr.mp_ratio;
 				}
 			}
+		}
+		[HarmonyPatch(typeof(PR),"changeState")]
+		[HarmonyPrefix]
+		public static bool changeState(PR.STATE _state,PR __instance)
+		{
+			if (__instance.getEH((EnhancerManager.EH)(1 << Plugin.idRaidenShogun)))
+			{
+				Console.WriteLine($"{__instance.getCurMagic()}");
+				if (4000 <= (int)_state && (int)_state < 4100 && !__instance.isAbsorbState()&&null!=__instance.getCurMagic())
+					return false;
+			}
+			return true;
 		}
 		[HarmonyPatch(typeof(NelEnemy),"changeStateToDie")]
 		[HarmonyPrefix]
@@ -145,12 +166,14 @@ namespace BobOnGradle
 					MdOut.clear();
 					//Console.WriteLine("sz " + ___Mv.sizey);
 					Tk.Matrix = ___RtkBuf.Matrix;
-					PxlCharacter chara = Plugin.nahida;
-					PxlPose pose = chara.getPoseByName("trikarma");
-					PxlSequence seq = pose.getSequence(0);
-					PxlFrame frame = seq.getFrame(1);
-					if(mat==null)
+						PxlCharacter chara = Plugin.nahida;
+						PxlPose pose = chara.getPoseByName("trikarma");
+						PxlSequence seq = pose.getSequence(0);
+						PxlFrame frame = seq.getFrame(1);
+					if (mat == null)
+					{
 						mat = MTRX.blend2Mtr(BLEND.NORMAL, frame);
+					}
 					MdOut.activate("trikarma", mat, false, new Color32(255,255,255,255));
 					MdOut.initForImg(frame.getLayer(0).Img);
 					MdOut.Rect(0, 0, 32, 32);

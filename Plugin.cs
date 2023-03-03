@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BobOnGradle.Properties;
 using HarmonyLib;
 using HarmonyLib.Tools;
 using m2d;
@@ -76,6 +77,7 @@ namespace BobOnGradle
 		public static int idNoelle;
 		public static int idYelan;
 		public static int idNahida;
+		public static int idRaidenShogun;
 		static bool inited=false;
 		public static PxlCharacter nahida;
 		[HarmonyPatch(typeof(SceneGame),"Update")]
@@ -104,8 +106,8 @@ namespace BobOnGradle
 					0,
 					null,
 					"要一尘不染才行",
-					"诺艾尔获得魔力值比例50%的防御力；\n" +
-					"魔法霰弹额外提高诺艾尔防御力50%的攻击力；\n" +
+					"诺艾尔受到的伤害减少魔力值比例的50%；\n" +
+					"魔法霰弹伤害额外提高魔力值比例的25%；\n" +
 					"此外，每打倒1个敌人，过充槽立刻获得224魔力值。",
 					out idNoelle);/*
 				Utils.registerEnhancer(
@@ -125,11 +127,19 @@ namespace BobOnGradle
 					null,
 					"大辩圆成之实",
 					"敌人对诺艾尔造成伤害时，将会获得蕴种印。\n" +
-					"诺艾尔的轻攻击或魔法霰弹命中处于蕴种印状态下的敌人时，\n" +
+					"诺艾尔的攻击命中处于蕴种印状态下的敌人时，\n" +
 					"将对所有处于蕴种印状态下的敌人释放灭净三业·业障除，\n" +
 					"基于本次攻击力的200%，造成同类别的伤害。每0.2秒至多触发一次。",
 					out idNahida);
-				nahida = PxlsLoader.loadCharacterASync("nahida", File.ReadAllBytes("nahida.pxls"), 64);
+				Utils.registerEnhancer(
+					"raiden_shogun",
+					0,
+					null,
+					"负愿前行",
+					"诺艾尔的魔法霰弹将无视敌人60%的防御力。\n" +
+					"持有魔法霰弹时，诺艾尔获得抗打断。",
+					out idRaidenShogun);
+				nahida = PxlsLoader.loadCharacterASync("nahida", Properties.Resources.nahida, 64);
 				//nahida.getPoseByName("trikarma").getSequence(0).getFrame(0).getImageTexture();
 				Console.WriteLine("init with no exceptions");
 			}
