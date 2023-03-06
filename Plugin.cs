@@ -147,7 +147,7 @@ namespace BobOnGradle
 			{
 				Console.WriteLine(e);
 			}
-			Console.WriteLine("init complete");
+			Console.WriteLine("init complete2");
 		}
 	}
 }

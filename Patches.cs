@@ -192,5 +192,72 @@ namespace BobOnGradle
 			}
 			return true;
 		}
+		[HarmonyPatch(typeof(NelEnemy),"prepareHpMpBarMesh")]
+		[HarmonyPrefix]
+		public static void prepareBarPre(ref NelEnemy.FLAG ___flags)
+		{
+			___flags |= NelEnemy.FLAG.FINE_HPMP_BAR | NelEnemy.FLAG.FINE_HPMP_BAR_CREATE;
+		}
+		[HarmonyPatch(typeof(M2PrSkill),"isParryable")]
+		[HarmonyPostfix]
+		public static void tryParry(bool __result,float ___parry_t)
+		{
+			if(__result)
+			{
+				UILog.Instance.AddAlert("成功的格挡：剩余时间 " + ___parry_t + " tick(s)");
+			}
+		}
+		[HarmonyPatch(typeof(NelEnemy),"prepareHpMpBarMeshInner")]
+		[HarmonyPostfix]
+		public static void prepareBarPost(MeshDrawer ___MdHpMpBar,NelEnemy __instance,NAI ___Nai)
+		{
+			if (__instance is NelNUni && !__instance.isOverDrive()&&___Nai!=null)
+			{
+				NaTicket ticket=___Nai.getCurTicket();
+				if (ticket!=null&&ticket.type==NAI.TYPE.MAG_0&&(ticket.prog==PROG.ACTIVE||ticket.prog==PROG.PROG0))
+				{
+					float b = -30;
+					int leftticks = 0;
+					if(ticket.prog==PROG.ACTIVE)
+						leftticks += 70-(int)__instance.state_time;
+					double dis = Math.Sqrt((__instance.AimPr.x - __instance.x) * (__instance.AimPr.x - __instance.x)
+						+ (__instance.AimPr.y - __instance.y) * (__instance.AimPr.y - __instance.y));
+					dis -= 0.75;
+					int i = 0;
+					Console.WriteLine("distance " + dis+" target "+___Nai.target_sizex+" "+___Nai.target_sizey);
+					for(i=0;i<100;i++)
+					{
+						float num2 = 0.38f * X.NI(0.4f, 1f, X.ZSIN(i, 11f));
+						dis -= num2;
+						if (dis <= 0) break;
+						leftticks++;
+					}
+					Console.WriteLine("expect " + i);
+					leftticks -= 9;
+					if (leftticks < 0)
+						return;
+					___MdHpMpBar.Col = C32.d2c(2281701376U);
+					___MdHpMpBar.BoxBL(-43f, b-10f, 87f, 4f, 0f, false);
+					if (leftticks >= 9)
+					{
+						leftticks -= 9;
+						___MdHpMpBar.Col = C32.d2c(0xDE00FF00);
+						if (leftticks > 60)
+							leftticks = 60;
+						___MdHpMpBar.Line(-42, b-8, leftticks * 42 * 2 / 60 - 42, b-8, 2);
+					}
+					else
+					{
+						___MdHpMpBar.Col = C32.d2c(0xDEFFFF00);
+						___MdHpMpBar.Line(-42, b-8, leftticks * 42 * 2 / 9 - 42, b-8, 2);
+						if(Utils.GetNoel().get_current_state()!=PR.STATE.PUNCH)
+						{
+							//Utils.GetNoel().changeState(PR.STATE.PUNCH);
+						}
+					}
+				}
+				Console.WriteLine(__instance.state_time);
+			}
+		}
 	}
 }
