@@ -153,32 +153,37 @@ namespace BobOnGradle
 			//Console.WriteLine($"draw {draw_id}");
 			if (draw_id == 5)
 				__result = true;
-			if(draw_id!=6)
+			if (draw_id == 6)
 			{
-				return;
-			}
-			if (___Mv.is_alive&&draw.ContainsKey(___Mv))
-			{
-				M2MoverPr aimPr = ___Mv.AimPr;
-				if (aimPr != null && aimPr.is_alive)
+				if (___Mv.is_alive && draw.ContainsKey(___Mv))
 				{
-					MdOut = draw.GetValueSafe(___Mv);
-					MdOut.clear();
-					//Console.WriteLine("sz " + ___Mv.sizey);
-					Tk.Matrix = ___RtkBuf.Matrix;
+					M2MoverPr aimPr = ___Mv.AimPr;
+					if (aimPr != null && aimPr.is_alive)
+					{
+						MdOut = draw.GetValueSafe(___Mv);
+						MdOut.clear();
+						//Console.WriteLine("sz " + ___Mv.sizey);
+						Tk.Matrix = ___RtkBuf.Matrix;
 						PxlCharacter chara = Plugin.nahida;
 						PxlPose pose = chara.getPoseByName("trikarma");
 						PxlSequence seq = pose.getSequence(0);
 						PxlFrame frame = seq.getFrame(1);
-					if (mat == null)
-					{
-						mat = MTRX.blend2Mtr(BLEND.NORMAL, frame);
+						if (mat == null)
+						{
+							mat = MTRX.blend2Mtr(BLEND.NORMAL, frame);
+						}
+						MdOut.activate("trikarma", mat, false, new Color32(255, 255, 255, 255));
+						MdOut.initForImg(frame.getLayer(0).Img);
+						MdOut.Rect(0, 0, 32, 32);
+						//Console.WriteLine(Environment.StackTrace);
+						__result = true;
 					}
-					MdOut.activate("trikarma", mat, false, new Color32(255,255,255,255));
-					MdOut.initForImg(frame.getLayer(0).Img);
-					MdOut.Rect(0, 0, 32, 32);
-					__result = true;
 				}
+				__result = true;
+			}
+			if(draw_id==7)
+			{
+
 			}
 		}
 		[HarmonyPatch(typeof(PR), "applyBurstMpDamage")]
@@ -213,6 +218,8 @@ namespace BobOnGradle
 		{
 			if (__instance is NelNUni && !__instance.isOverDrive()&&___Nai!=null)
 			{
+				if(__instance.AimPr is PR)
+					Console.WriteLine("noel x " + __instance.AimPr.x + " y " + __instance.AimPr.y);
 				NaTicket ticket=___Nai.getCurTicket();
 				if (ticket!=null&&ticket.type==NAI.TYPE.MAG_0&&(ticket.prog==PROG.ACTIVE||ticket.prog==PROG.PROG0))
 				{
