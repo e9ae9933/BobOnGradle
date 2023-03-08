@@ -4,6 +4,7 @@ using nel;
 using PixelLiner;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -180,25 +181,46 @@ namespace BobOnGradle
 			if(draw_id==7)
 			{
 				MdOut = new MeshDrawer();
-				MdOut.activate("bounding_box", MTRX.MtrMeshNormal, false, C32.d2c(0xEEEE0000));
-				MdOut.Col = C32.d2c(0xEEEE0000);
+				MdOut.activate("bounding_box_enemy", MTRX.MtrMeshNormal, false, C32.d2c(0xEEEE0000));
+				//MdOut.Col = C32.d2c(0xEEEE0000);
 				Tk.Matrix = ___Mv.transform.localToWorldMatrix;
 				Map2d m2d = ___Mv.Mp;
 				float clenb = m2d.CLENB;
-				MdOut.Rect(0, 0, ___Mv.sizex*clenb, ___Mv.sizey*clenb);
 				MdOut.Col = C32.d2c(0xEEEEEE00);
 				Vector2[] v=___Mv.getColliderCreator().Cld.GetPath(0);
-				foreach(Vector2 v2 in v)
-				{
-					Console.Write(v2+", ");
-				}
 				int n = v.Length;
 				for (int i = 0; i < n; i++)
 					MdOut.Line(v[i].x*clenb, v[i].y * clenb, v[(i + 1) % n].x * clenb, v[(i + 1) % n].y * clenb, 2);
-				Console.WriteLine();
-				Console.WriteLine(___Mv.Mp.CLENB);
+				float dx = ___Mv.x_shifted - ___Mv.x, dy = ___Mv.y_shifted - ___Mv.y;
+				MdOut.Col = C32.d2c(0xEEEE0000);
+				for (int i = 0; i < n; i++)
+					MdOut.Line((v[i].x + dx) * clenb, (v[i].y + dy) * clenb, (v[(i + 1) % n].x + dx) * clenb, (v[(i + 1) % n].y + dy) * clenb, 2);
 				__result = true;
 			}
+		}
+		[HarmonyPatch(typeof(NoelAnimator),"RenderPrepareMesh")]
+		[HarmonyPrefix]
+		public static bool prepareNoelRender(ref MeshDrawer MdOut,int draw_id,PRNoel ___Pr,ref bool __result)
+		{
+			if (draw_id == 2)
+			{
+				MdOut = new MeshDrawer();
+				MdOut.activate("bounding_box_noel", MTRX.MtrMeshNormal, false, C32.d2c(0xEE66CCFF));
+				Map2d m2d = ___Pr.Mp;
+				Console.WriteLine("prepared");
+				float clenb = m2d.CLENB;
+				Vector2[] v = ___Pr.getColliderCreator().Cld.GetPath(0);
+				int n = v.Length;
+				for (int i = 0; i < n; i++)
+					MdOut.Line(v[i].x * clenb, v[i].y * clenb, v[(i + 1) % n].x * clenb, v[(i + 1) % n].y * clenb, 2);
+				float dx=___Pr.x_shifted-___Pr.x, dy=___Pr.y_shifted-___Pr.y;
+				MdOut.Col = C32.d2c(0xEEEE0000);
+				for (int i = 0; i < n; i++)
+					MdOut.Line((v[i].x+dx) * clenb, (v[i].y+dy) * clenb, (v[(i + 1) % n].x+dx) * clenb, (v[(i + 1) % n].y+dy) * clenb, 2);
+				__result = true;
+				return false;
+			}
+			return true;
 		}
 		[HarmonyPatch(typeof(PR), "applyBurstMpDamage")]
 		[HarmonyPrefix]
