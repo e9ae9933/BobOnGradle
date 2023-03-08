@@ -182,7 +182,6 @@ namespace BobOnGradle
 			{
 				MdOut = new MeshDrawer();
 				MdOut.activate("bounding_box_enemy", MTRX.MtrMeshNormal, false, C32.d2c(0xEEEE0000));
-				//MdOut.Col = C32.d2c(0xEEEE0000);
 				Tk.Matrix = ___Mv.transform.localToWorldMatrix;
 				Map2d m2d = ___Mv.Mp;
 				float clenb = m2d.CLENB;
