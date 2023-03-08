@@ -150,7 +150,6 @@ namespace BobOnGradle
 			ref int draw_id,ref M2RenderTicket Tk, ref MeshDrawer MdOut,ref bool __result,
 			NelEnemy ___Mv,Map2d ___Mp,M2RenderTicket ___RtkBuf)
 		{
-			//Console.WriteLine($"draw {draw_id}");
 			if (draw_id == 5)
 				__result = true;
 			if (draw_id == 6)
@@ -162,7 +161,6 @@ namespace BobOnGradle
 					{
 						MdOut = draw.GetValueSafe(___Mv);
 						MdOut.clear();
-						//Console.WriteLine("sz " + ___Mv.sizey);
 						Tk.Matrix = ___RtkBuf.Matrix;
 						PxlCharacter chara = Plugin.nahida;
 						PxlPose pose = chara.getPoseByName("trikarma");
@@ -175,15 +173,31 @@ namespace BobOnGradle
 						MdOut.activate("trikarma", mat, false, new Color32(255, 255, 255, 255));
 						MdOut.initForImg(frame.getLayer(0).Img);
 						MdOut.Rect(0, 0, 32, 32);
-						//Console.WriteLine(Environment.StackTrace);
-						__result = true;
 					}
 				}
 				__result = true;
 			}
 			if(draw_id==7)
 			{
-
+				MdOut = new MeshDrawer();
+				MdOut.activate("bounding_box", MTRX.MtrMeshNormal, false, C32.d2c(0xEEEE0000));
+				MdOut.Col = C32.d2c(0xEEEE0000);
+				Tk.Matrix = ___Mv.transform.localToWorldMatrix;
+				Map2d m2d = ___Mv.Mp;
+				float clenb = m2d.CLENB;
+				MdOut.Rect(0, 0, ___Mv.sizex*clenb, ___Mv.sizey*clenb);
+				MdOut.Col = C32.d2c(0xEEEEEE00);
+				Vector2[] v=___Mv.getColliderCreator().Cld.GetPath(0);
+				foreach(Vector2 v2 in v)
+				{
+					Console.Write(v2+", ");
+				}
+				int n = v.Length;
+				for (int i = 0; i < n; i++)
+					MdOut.Line(v[i].x*clenb, v[i].y * clenb, v[(i + 1) % n].x * clenb, v[(i + 1) % n].y * clenb, 2);
+				Console.WriteLine();
+				Console.WriteLine(___Mv.Mp.CLENB);
+				__result = true;
 			}
 		}
 		[HarmonyPatch(typeof(PR), "applyBurstMpDamage")]
@@ -231,7 +245,6 @@ namespace BobOnGradle
 						+ (__instance.AimPr.y - __instance.y) * (__instance.AimPr.y - __instance.y));
 					dis -= 0.75;
 					int i = 0;
-					Console.WriteLine("distance " + dis+" target "+___Nai.target_sizex+" "+___Nai.target_sizey);
 					for(i=0;i<100;i++)
 					{
 						float num2 = 0.38f * X.NI(0.4f, 1f, X.ZSIN(i, 11f));
@@ -263,7 +276,6 @@ namespace BobOnGradle
 						}
 					}
 				}
-				Console.WriteLine(__instance.state_time);
 			}
 		}
 	}

@@ -49,8 +49,6 @@ namespace BobOnGradle
 
 			try
 			{
-				Console.WriteLine("noel "+Utils.GetNoel().x + " " + Utils.GetNoel().y);
-				Console.WriteLine("noelshifted " + Utils.GetNoel().x_shifted + " " + Utils.GetNoel().y_shifted);
 				while (nextTickList.Count > 0)
 				{
 					Action a = nextTickList.Dequeue();
