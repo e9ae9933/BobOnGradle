@@ -178,48 +178,56 @@ namespace BobOnGradle
 				}
 				__result = true;
 			}
-			if(draw_id==7)
-			{
-				MdOut = new MeshDrawer();
-				MdOut.activate("bounding_box_enemy", MTRX.MtrMeshNormal, false, C32.d2c(0xEEEE0000));
-				Tk.Matrix = ___Mv.transform.localToWorldMatrix;
-				Map2d m2d = ___Mv.Mp;
-				float clenb = m2d.CLENB;
-				MdOut.Col = C32.d2c(0xEEEEEE00);
-				Vector2[] v=___Mv.getColliderCreator().Cld.GetPath(0);
-				int n = v.Length;
-				for (int i = 0; i < n; i++)
-					MdOut.Line(v[i].x*clenb, v[i].y * clenb, v[(i + 1) % n].x * clenb, v[(i + 1) % n].y * clenb, 2);
-				float dx = ___Mv.x_shifted - ___Mv.x, dy = ___Mv.y_shifted - ___Mv.y;
-				MdOut.Col = C32.d2c(0xEEEE0000);
-				for (int i = 0; i < n; i++)
-					MdOut.Line((v[i].x + dx) * clenb, (v[i].y + dy) * clenb, (v[(i + 1) % n].x + dx) * clenb, (v[(i + 1) % n].y + dy) * clenb, 2);
-				__result = true;
-			}
 		}
-		[HarmonyPatch(typeof(NoelAnimator),"RenderPrepareMesh")]
-		[HarmonyPrefix]
-		public static bool prepareNoelRender(ref MeshDrawer MdOut,int draw_id,PRNoel ___Pr,ref bool __result)
+		[HarmonyPatch(typeof(M2MovRenderContainer),"RenderWholeMover")]
+		[HarmonyPostfix]
+		public static void renderWholeMover(ref ProjectionContainer JCon,ref Camera Cam,ref int draw_id, ref List<M2RenderTicket>[] ___AADob)
 		{
-			if (draw_id == 2)
+			List<M2RenderTicket> list = ___AADob[draw_id];
+			foreach (M2RenderTicket ticket in list)
 			{
-				MdOut = new MeshDrawer();
-				MdOut.activate("bounding_box_noel", MTRX.MtrMeshNormal, false, C32.d2c(0xEE66CCFF));
-				Map2d m2d = ___Pr.Mp;
-				Console.WriteLine("prepared");
+				M2Mover mover=ticket.AssignMover;
+				Map2d m2d = mover.Mp;
 				float clenb = m2d.CLENB;
-				Vector2[] v = ___Pr.getColliderCreator().Cld.GetPath(0);
+				Matrix4x4 mat=Matrix4x4.identity;
+				if (mover == null)
+					continue;
+				if (mover.transform != null)
+					mat = mover.transform.localToWorldMatrix;
+				else
+					Console.WriteLine("no transform: " + mover);
+				if(mover.getColliderCreator() == null)
+				{
+					Console.WriteLine("no collider: " + mover);
+					continue;
+				}
+				if(mover.getColliderCreator().Cld==null)
+				{
+					Console.WriteLine("no cld: " + mover);
+					continue;
+				}
+				Vector2[] v=mover.getColliderCreator().Cld.GetPath(0);
+				if(v==null)
+				{
+					Console.WriteLine("v null: " + mover);
+					continue;
+				}
 				int n = v.Length;
-				for (int i = 0; i < n; i++)
-					MdOut.Line(v[i].x * clenb, v[i].y * clenb, v[(i + 1) % n].x * clenb, v[(i + 1) % n].y * clenb, 2);
-				float dx=___Pr.x_shifted-___Pr.x, dy=___Pr.y_shifted-___Pr.y;
-				MdOut.Col = C32.d2c(0xEEEE0000);
-				for (int i = 0; i < n; i++)
-					MdOut.Line((v[i].x+dx) * clenb, (v[i].y+dy) * clenb, (v[(i + 1) % n].x+dx) * clenb, (v[(i + 1) % n].y+dy) * clenb, 2);
-				__result = true;
-				return false;
+				MeshDrawer md = new MeshDrawer();
+				//Console.WriteLine("clenb "+clenb+" mover "+mover);
+				md.activate("bounding_box_refresh", MTRX.MtrMeshNormal, false, C32.d2c(0xFFFFFFFFU));
+				MTRX.MtrMeshNormal.SetPass(0);
+				md.Col = C32.d2c(0xEE66CCFFU);
+				for(int i=0;i<n;i++)
+				{
+					int j = (i + 1) % n;
+					md.Line(v[i].x*clenb, v[i].y*clenb, v[j].x*clenb, v[j].y*clenb,3);
+				}
+				md.Col = C32.d2c(0xEEEE0000U);
+				md.Box(0, 0, 8, 8);
+				GL.LoadProjectionMatrix(JCon.CameraProjectionTransformed*mat);
+				BLIT.RenderToGLImmediate001(md,md.draw_triangle_count);
 			}
-			return true;
 		}
 		[HarmonyPatch(typeof(PR), "applyBurstMpDamage")]
 		[HarmonyPrefix]

@@ -50,7 +50,7 @@ namespace BobOnGradle
 			try
 			{
 				PR pr = Utils.GetNoel();
-				Console.WriteLine($"noel ({pr.x}, {pr.y}) ({pr.x_shifted}, {pr.y_shifted})");
+				//Console.WriteLine($"noel ({pr.x}, {pr.y}) ({pr.x_shifted}, {pr.y_shifted})");
 				while (nextTickList.Count > 0)
 				{
 					Action a = nextTickList.Dequeue();
