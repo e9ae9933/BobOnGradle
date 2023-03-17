@@ -31,6 +31,7 @@ namespace BobOnGradle
 			instance = this;
 			try
 			{
+				//nahida = PxlsLoader.loadCharacterASync("nahida", Properties.Resources.nahida, 64);
 				Console.WriteLine("loading2");
 				HarmonyFileLog.Enabled = true;
 				Harmony.CreateAndPatchAll(typeof(Patches));
@@ -80,12 +81,15 @@ namespace BobOnGradle
 		public static int idYelan;
 		public static int idNahida;
 		public static int idRaidenShogun;
+		public static int idAdvanced;
 		static bool inited=false;
 		public static PxlCharacter nahida;
 		[HarmonyPatch(typeof(SceneGame),"Update")]
 		[HarmonyPostfix]
 		static void init(byte ___t)
 		{
+			if (nahida == null)
+				nahida = PxlsLoader.loadCharacterASync("nahida", Properties.Resources.nahida, 64);
 			if (inited)
 				return;
 			if (___t != 2)
@@ -93,7 +97,18 @@ namespace BobOnGradle
 			inited = true;
 			try
 			{
+				Console.WriteLine("try init");
 				inited = true;
+				PxlPose icons=nahida.getPoseByName("icons");
+				Utils.registerEnhancer(
+					"advance",
+					0,
+					null,
+					"高级功能",
+					"显示怪物碰撞箱。\n" +
+					"显示攻击判定线。（不准确，测试中）\n" +
+					"小剑山拼刀辅助。",
+					out idAdvanced);
 				NelItem item = Utils.registerEnhancer(
 					"hutao",
 					0,
@@ -139,9 +154,8 @@ namespace BobOnGradle
 					null,
 					"负愿前行",
 					"诺艾尔的魔法霰弹将无视敌人60%的防御力。\n" +
-					"持有魔法霰弹时，诺艾尔获得抗打断。",
+					"持有魔法霰弹时，诺艾尔不会被敌人的攻击打断。",
 					out idRaidenShogun);
-				nahida = PxlsLoader.loadCharacterASync("nahida", Properties.Resources.nahida, 64);
 				//nahida.getPoseByName("trikarma").getSequence(0).getFrame(0).getImageTexture();
 				Console.WriteLine("init with no exceptions");
 			}

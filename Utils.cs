@@ -22,7 +22,7 @@ namespace BobOnGradle
 			t.replaceTextContents(value);
 			TX.getDefaultFamily().Add(t);
 		}
-		static int idd = 62000;
+		static int idd = 62002;
 		public static NelItem registerEnhancer(string name,int cost,PxlFrame frame,string title,string desc,out int id)
 		{
 			Type info = typeof(EnhancerManager);
